@@ -1,5 +1,9 @@
 # Reinforcement Learning Grid Game
 
+The game was built in order to easily (with the addition of new rows and columns) increase the number of states. In fact, the number of states are **m x n x a** where **m**, **n**, and **a = 4** are respectivelly the number of rows, columns and actions
+
+
+## Q-learning
 The agent's performance given different number of iterations (each action is one iteration)
 | 100000 | 250000 | 500000 | 1000000 |
 | --- | --- | --- | --- |
