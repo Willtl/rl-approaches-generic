@@ -13,7 +13,7 @@ One solution is to approximate these Q-values with machine learning models such 
 Below, the performance of each strategy is demonstrated and described to different game' instances sizes.
 
 ## Q-learning
-The agent's performance given different number of iterations (each action is one iteration)
+The agent's performance on a *5x5* instance of the game given different number of iterations (each action is one iteration)
 | 100000 | 250000 | 500000 | 1000000 |
 | --- | --- | --- | --- |
 | ![](images/100000.gif) | ![](images/250000.gif) | ![](images/500000.gif) | ![](images/1000000.gif) | 
