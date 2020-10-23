@@ -14,7 +14,7 @@ Below, the performance of each strategy is demonstrated and described to differe
 
 ## Q-learning
 The agent's performance with Q-learning on a *5x5* instance of the game given different number of iterations (each action is one iteration)
-| 100000 | 250000 | 500000 | 1000000 |
+| 1e5 | 2.5e5 | 5e5 | 1e6 |
 | --- | --- | --- | --- |
 | ![](images/100000.gif) | ![](images/250000.gif) | ![](images/500000.gif) | ![](images/1000000.gif) | 
  
