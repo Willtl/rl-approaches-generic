@@ -8,7 +8,7 @@ import game as gm
 # Pygame config
 pygame.init()
 size = width, height = gm.SCREEN_WIDTH, gm.SCREEN_HEIGHT
-screen = pygame.display.set_mode(size)
+screen = None
 
 # Game state and stuff
 game = gm.Game()
@@ -16,6 +16,10 @@ RENDER = True
 
 
 def render():
+    global screen
+    if screen is None:
+        screen = pygame.display.set_mode(size)
+
     screen.fill(utils.Color.BLACK.value)
     # Draw the grid
     for row in range(gm.ROW_COUNT):
@@ -60,10 +64,9 @@ def control(event):
         player = 1
     game.step(action, player)
 
-    # Player two
-    action = 0
-    player = 0
     if gm.TWO_PLAYERS:
+        action = 0
+        player = 0
         if event.key == K_UP:
             action = 1
             player = 2
@@ -76,19 +79,26 @@ def control(event):
         elif event.key == K_LEFT:
             action = 4
             player = 2
-    game.step(action, player)
+        game.step(action, player)
+
 
 
 def main():
+    quit = False
     while True:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                sys.exit()
+            if event.type == QUIT:
+                quit = True
+            elif event.type == KEYDOWN and event.key == K_ESCAPE:
+                quit = True
+
             if event.type == pygame.KEYDOWN:
                 control(event)
 
-        if RENDER:
-            render()
+        if quit:
+            return
+
+        render()
 
 
 if __name__ == "__main__":

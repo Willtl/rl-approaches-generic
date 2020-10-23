@@ -3,13 +3,13 @@ import player
 import random
 
 # Game configuration
-NUMB_SEEDS = 2
+NUMB_SEEDS = 1
 SEED_SPAWN_TIME = 100  # ms
-TWO_PLAYERS = True
+TWO_PLAYERS = False
 
 # How many rows and columns we will have
-ROW_COUNT = 10
-COLUMN_COUNT = 17
+ROW_COUNT = 4
+COLUMN_COUNT = 4
 
 # WIDTH and HEIGHT of each grid location
 WIDTH = 30
@@ -24,6 +24,12 @@ TOP_MARGIN = CELL_MARGIN * 2 + HEIGHT
 # Do the math to figure out our screen dimensions
 SCREEN_WIDTH = (WIDTH + CELL_MARGIN) * COLUMN_COUNT + CELL_MARGIN
 SCREEN_HEIGHT = (HEIGHT + CELL_MARGIN) * ROW_COUNT + CELL_MARGIN + TOP_MARGIN
+
+
+class State:
+    def __init__(self, _seed_pos, _one_pos):
+        self.seed_pos = _seed_pos
+        self.one_pos = _one_pos
 
 
 class Game:
@@ -42,15 +48,17 @@ class Game:
             self.board.spawn_seed(self.player_one, self.player_two)
 
     def step(self, action, player):
+        got_seed = None
         if player == 1:
             if action == 1 and self.player_one.row > 0:
-                self.move_player(self.player_one, -1, 0)
+                got_seed = self.move_player(self.player_one, -1, 0)
             if action == 2 and self.player_one.col < COLUMN_COUNT - 1:
-                self.move_player(self.player_one, 0, 1)
+                got_seed = self.move_player(self.player_one, 0, 1)
             if action == 3 and self.player_one.row < ROW_COUNT - 1:
-                self.move_player(self.player_one, 1, 0)
+                got_seed = self.move_player(self.player_one, 1, 0)
             if action == 4 and self.player_one.col > 0:
-                self.move_player(self.player_one, 0, -1)
+                got_seed = self.move_player(self.player_one, 0, -1)
+            # print(f"x: {self.player_one.row}, y: {self.player_one.col}")
 
         if player == 2:
             if action == 1 and self.player_two.row > 0:
@@ -61,6 +69,20 @@ class Game:
                 self.move_player(self.player_two, 1, 0)
             if action == 4 and self.player_two.col > 0:
                 self.move_player(self.player_two, 0, -1)
+
+        # Array with two values with the seed position
+        seed_pos = self.board.seed_pos
+        # Player one position
+        one_pos = [self.player_one.row, self.player_one.col]
+        state = State(seed_pos, one_pos)
+
+        # Calculate reward
+        if got_seed:
+            reward = 0
+        else:
+            reward = -1
+
+        return state, reward
 
     def spawn_player(self, player):
         # Spawn player to a random position
@@ -83,7 +105,7 @@ class Game:
 
         # Update player's position given new position
         self.move_player(player, row, col)
-        
+
     def move_player(self, player, row, col):
         if TWO_PLAYERS:
             the_other_player = None
@@ -104,11 +126,25 @@ class Game:
         player.row += row
         player.col += col
 
+        got_seed = False
         # Check if new position increase score
         if self.board.grid[player.row][player.col] == 3:
             player.score += 1
+            got_seed = True
             self.board.spawn_seed(self.player_one, self.player_two)
-            print(f"Score Player 1: {self.player_one.score}, Player 2: {self.player_two.score}")
+            # if TWO_PLAYERS:
+            #     print(f"Score Player 1: {self.player_one.score}, Player 2: {self.player_two.score}")
+            # else:
+            #     print(f"Score Player 1: {self.player_one.score} at {player.row}, {player.col}")
 
         # Update grid with new position
         self.board.grid[player.row][player.col] = player.id
+        return got_seed
+
+    def reset(self):
+        # Array with two values with the seed position
+        seed_pos = self.board.seed_pos
+        # Player one position
+        one_pos = [self.player_one.row, self.player_one.col]
+        state = State(seed_pos, one_pos)
+        return state

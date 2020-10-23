@@ -7,6 +7,8 @@ class Board:
     def __init__(self):
         #  2-dimensional array
         self.grid = []
+        self.seed_pos = []
+
         for row in range(gm.ROW_COUNT):
             self.grid.append([])
             for column in range(gm.COLUMN_COUNT):
@@ -32,3 +34,4 @@ class Board:
                 col = random.randint(0, gm.ROW_COUNT - 1)
 
         self.grid[row][col] = 3
+        self.seed_pos = [row, col]
