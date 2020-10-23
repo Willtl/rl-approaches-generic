@@ -1,6 +1,6 @@
 # Reinforcement Learning - Seed Game
 
-*This project was developed in order to improve my skills with reinforcement learning, as well as to demonstrate a situation where deep reinforcement learning is more viable than Q-learning.*
+*This project was developed in order to improve my skills with reinforcement learning, as well as to demonstrate a situation where deep reinforcement learning is more practicable than Q-learning.*
 
 The game simply consists of a grid of cells with one seed and one player (the game accepts multiple players/seeds but this is out of the scope of the project). The game starts with the *player* (blue) and the *seed* (green) at a random cell such that the row and columns of both are not the same. The player can move up, right, down, and left. Every time it overlaps with the seed it scores one point and a new seed is spawned at a random cell.
 
