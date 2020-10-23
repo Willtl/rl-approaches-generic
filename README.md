@@ -1,6 +1,6 @@
 # Reinforcement Learning Grid Game
 
-The game was built in order to easily (with the addition of new rows and columns) increase the number of states. In fact, if we consider *x* as the number of rows and columns, the number of states is *x<sup>2</sup>*. The number of actions is four (i.e., up, right, down, left).
+The game was built in order to easily (with the addition of new rows and columns) increase the number of states. In fact, if we consider *x* as the number of rows and columns, the number of states is equal to *x<sup>2</sup>*, and four being the number of actions (i.e., up, right, down, left).
 
 
 ## Q-learning
