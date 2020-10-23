@@ -2,7 +2,7 @@
 
 *This project was developed in order to improve my skills with reinforcement learning, as well as to demonstrate a situation where deep reinforcement learning is more viable than Q-learning.*
 
-The game simply consists of a grid of cells with one seed and one player (the game accepts multiple players/seeds but this is out of scope of the project). The game starts with the *player* (blue) and the *seed* at a random cell such that the row and columsn of both are not the same. The player can move up, right, down, and left. Every time it overlaps with the seed it scores one point.
+The game simply consists of a grid of cells with one seed and one player (the game accepts multiple players/seeds but this is out of the scope of the project). The game starts with the *player* (blue) and the *seed* (green) at a random cell such that the row and columns of both are not the same. The player can move up, right, down, and left. Every time it overlaps with the seed it scores one point and a new seed is spawned at a random cell.
 
 The mechanics of the game were developed to easily (with the increment of rows and columns) increase the number of states. Since the seed spawns randomly, if we consider *x* as the number of rows and columns, the number of states is equal to *x<sup>2</sup>*, and four being the number of actions (i.e., up, right, down, left). 
 
