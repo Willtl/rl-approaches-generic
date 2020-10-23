@@ -1,5 +1,5 @@
-import board
-import player
+import env.board as board
+import env.player as player
 import random
 
 # Game configuration

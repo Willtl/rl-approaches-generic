@@ -2,8 +2,8 @@ import sys, pygame
 from pygame.locals import *
 import random
 
-import utils
-import game as gm
+import env.utils as utils
+import env.game as gm
 
 # Pygame config
 pygame.init()

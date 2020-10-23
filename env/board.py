@@ -1,5 +1,5 @@
-import player as p
-import game as gm
+import env.player as player
+import env.game as gm
 import random
 
 

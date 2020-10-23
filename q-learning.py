@@ -1,4 +1,4 @@
-import gridseedpygame as env
+import env.gridseedpygame as env
 import numpy as np
 import time
 
@@ -27,8 +27,6 @@ def get_state(state):
 
 
 if __name__ == '__main__':
-    # env.main()
-
     print(f"Number of possible states: {n_states}")
 
     state = env.game.reset()
@@ -44,7 +42,7 @@ if __name__ == '__main__':
         if cur_it % 10000 == 0:
             print(cur_it)
 
-        # Linearly decrease epsilon from epsilon
+        # Linearly decrease epsilon
         epsilon = 0.5 - cur_it * (0.5 / zero_eps_at)
         if np.random.random() > epsilon:
             action = np.argmax(q_table[matrix_state])
