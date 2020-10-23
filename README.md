@@ -1,4 +1,4 @@
-# Reinforcement Learning - Grid Game
+# Reinforcement Learning - Seed Game
 
 *This project was developed in order to improve my skills with reinforcement learning, as well as to demonstrate a situation where deep reinforcement learning is more viable than Q-learning.*
 
