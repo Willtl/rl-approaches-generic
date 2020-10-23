@@ -10,6 +10,8 @@ The project's idea relies on the fact that the number of states increases expone
 
 One solution is to approximate these Q-values with machine learning models such as an artificial neural network. Function approximation may speed up learning in finite problems, due to the fact that the model can generalize earlier experiences to previously unseen states.
 
+Below, the performance of each strategy is demonstrated and described to different game' instances sizes.
+
 ## Q-learning
 The agent's performance given different number of iterations (each action is one iteration)
 | 100000 | 250000 | 500000 | 1000000 |
