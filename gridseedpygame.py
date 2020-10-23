@@ -41,8 +41,8 @@ def render():
             # Draw the box
             pygame.draw.rect(screen, color, (x, y, gm.WIDTH, gm.HEIGHT), 0)
 
-    # pygame.display.flip()
-    pygame.display.update()
+    pygame.display.flip()
+    # pygame.display.update()
     # pygame.time.delay(10)
 
 
@@ -80,7 +80,6 @@ def control(event):
             action = 4
             player = 2
         game.step(action, player)
-
 
 
 def main():

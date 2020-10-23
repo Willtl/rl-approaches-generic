@@ -8,8 +8,8 @@ SEED_SPAWN_TIME = 100  # ms
 TWO_PLAYERS = False
 
 # How many rows and columns we will have
-ROW_COUNT = 4
-COLUMN_COUNT = 4
+ROW_COUNT = 5
+COLUMN_COUNT = 5
 
 # WIDTH and HEIGHT of each grid location
 WIDTH = 30
