@@ -13,7 +13,7 @@ os_size = [env.gm.ROW_COUNT, env.gm.COLUMN_COUNT, env.gm.ROW_COUNT, env.gm.COLUM
 q_table = np.random.uniform(low=0, high=0, size=os_size)
 learning_rate = 0.1
 discount = 0.95
-episodes = 1000000
+episodes = 2000000
 zero_eps_at = int(0.8 * episodes)
 
 
