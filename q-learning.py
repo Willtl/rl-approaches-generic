@@ -7,14 +7,14 @@ The game support multiple seeds and players. In this example, I am considering o
 4 rows and 4 cols, and one seed 
 '''
 
-# q-table size
+# Q-table size
 q_size = [env.gm.ROW_COUNT, env.gm.COLUMN_COUNT, env.gm.ROW_COUNT, env.gm.COLUMN_COUNT, 4]
 q_table = np.random.uniform(low=0, high=0, size=q_size)
 
 # Q-learning parameters
 learning_rate = 0.1
 discount = 0.95
-episodes = 2000000
+episodes = 100000
 zero_eps_at = int(0.8 * episodes)
 
 
@@ -25,8 +25,11 @@ def get_state(state):
 
 
 if __name__ == '__main__':
+    game_instance = env.Pygame()
+    # game_instance.run()
+
     # Initial state
-    matrix_state = get_state(env.game.reset())
+    matrix_state = get_state(game_instance.game.reset())
 
     cur_it = 0
     while cur_it < episodes:
@@ -41,7 +44,7 @@ if __name__ == '__main__':
             action = np.random.randint(0, 4)
 
         # Update game with action, player one
-        new_state, reward = env.game.step(action + 1, 1)    # reward 0 if got seed, -1 otherwise
+        new_state, reward = game_instance.game.step(action + 1, 1)    # reward 0 if got seed, -1 otherwise
         new_matrix_state = get_state(new_state)
 
         # Q-learning equation
@@ -55,8 +58,8 @@ if __name__ == '__main__':
 
         if cur_it > 0.99 * episodes:
             # Pump events
-            env.pygame.event.pump()
-            env.render()
+            game_instance.pump()
+            game_instance.render()
             time.sleep(0.1)
 
         cur_it += 1
