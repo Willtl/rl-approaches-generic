@@ -1,5 +1,6 @@
 import env.gridseedpygame as env
 import numpy as np
+import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -11,9 +12,9 @@ The game support multiple seeds and players. In this example, I am considering o
 '''
 
 # Neural network parameters
-learning_rate = 0.001
+# learning_rate = 0.5
 # How many change of states should be used to train the model
-train_iterations = 2000000
+train_iterations = 20000
 # Once the model is trained, how many iterations should be rendered to show de results
 test_iterations = 2000
 
@@ -22,7 +23,7 @@ q_size = [env.gm.ROW_COUNT, env.gm.COLUMN_COUNT, env.gm.ROW_COUNT, env.gm.COLUMN
 q_table = np.random.uniform(low=0, high=0, size=q_size)
 
 # Q-learning parameters
-discount = 0.95
+discount = 0.9
 
 
 class ANN(nn.Module):
@@ -33,137 +34,127 @@ class ANN(nn.Module):
         # Fully connected layers
         self.inputs = 4
         self.outputs = 4
-        self.l1 = nn.Linear(self.inputs, 6)  # To disable bias use bias=False
-        self.l2 = nn.Linear(6, 5)
-        self.l3 = nn.Linear(5, 4)
-        self.l4 = nn.Linear(4, self.outputs)
+        self.l1 = nn.Linear(self.inputs, 4)  # To disable bias use bias=False
+        self.l2 = nn.Linear(4, 4)
+        self.l3 = nn.Linear(4, self.outputs)
+
+        # Optimizer type
+        self.learning_rate = 0.1
+        self.optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
 
     # Define how the data passes through the layers
     def foward(self, x):
         # Passes x through layer one and activate with rectified linear unit function
         x = F.relu(self.l1(x))
         x = F.relu(self.l2(x))
-        x = F.relu(self.l3(x))
         # Linear output layer
-        x = self.l4(x)
+        x = self.l3(x)
         return x
 
     def feed(self, x):
-        # x = torch.rand((28, 28))
-        # x = x.view(1, 28 * 28)
         outputs = self.foward(x)
         return outputs
 
-    def train_net(self, trainset):
-        optimizer = optim.Adam(self.parameters(), lr=learning_rate)
+    # Train the network with one state
+    def backward(self, output, target, t):
+        # Zero the parameter gradients
+        self.zero_grad()
 
-        epochs = 10
-        for epoch in range(epochs):
-            epoch_loss = 0.0
-            for batch in trainset:
-                # the inputs
-                x, y = batch
-                # zero the parameter gradients
-                self.zero_grad()
-                # Foward
-                outputs = self.feed(x.view(-1, 28 * 28))
-                # For [0, 1, 0, 0] vectors, use mean squared error, for scalar values use nll_loss
-                loss = F.nll_loss(outputs, y)
-                # Back propagate the loss
-                loss.backward()
-                # Adjust the weights
-                optimizer.step()
-                # Calculate epoch loss
-                epoch_loss += outputs.shape[0] * loss.item()
-            print("Epoch loss: ", epoch_loss / len(trainset))
+        # Loss function
+        loss_criterion = nn.MSELoss()
+        # Calculate loss
+        loss = loss_criterion(output, target) * 4
 
-    def test_net(self, testset):
-        # Deactivate Dropout and BatchNorm
-        self.eval()
+        # Back propagate the loss
+        loss.backward()
 
-        correct = 0
-        total = 0
-        # Deactivate gradient calculations
-        with torch.no_grad():
-            # Check each batch in testset
-            for batch in testset:
-                x, y, = batch
-                outputs = self.feed(x.view(-1, 28 * 28))
-                # Loop through outputs and check if it is correct or not
-                for idx, i in enumerate(outputs):
-                    if torch.argmax(i) == y[idx]:
-                        correct += 1
-                    total += 1
-            print("Accuracy: ", round(correct/total, 3))
+        print(loss)
 
-        # Activate Dropout and BatchNorm again
-        self.train()
-
-    def update_weights(self):
-        print(self.l1.weight)
-        for i in range(64):
-            print(self.l1.weight[i])
-        # for j in range(28 * 28):
-        #     print(self.l1.weight[i][j])
-        weight = nn.Parameter(torch.ones_like(self.l1.weight))
-        print(weight)
-
-    def print(self):
-        print(self)
+        for param in self.parameters():
+            print(param)
+        # Adjust the weights
+        self.optimizer.step()
+        print("after step")
+        for param in self.parameters():
+            print(param)
+        quit()
+        return loss
 
 
-def get_state(state):
+def get_state(state, row_count, col_count):
     seed_pos = state.seed_pos
     one_pos = state.one_pos
-    return tuple([seed_pos[0], seed_pos[1], one_pos[0], one_pos[1]])
+    return [seed_pos[0] / row_count, seed_pos[1] / col_count, one_pos[0] / row_count, one_pos[1] / col_count]
 
 
 if __name__ == '__main__':
+    # Neural network
     model = ANN()
-    print(model)
-    x = torch.rand((2, 2))
-    print(x)
-    x[0][0] = 0
-    print(x[0][0])
-    x = x.view(-1, 4)
-    print(x)
+    # Instance of the game
+    game_instance = env.Pygame()
+    row_count = float(game_instance.row_count) - 1
+    col_count = float(game_instance.col_count) - 1
 
-    output = model.feed(x)
-    print(f"output {output}")
-    '''
-    # Initial state
-    state = get_state(env.game.reset())
-    
-    cur_it = 0
-    while cur_it < episodes:
-        if cur_it % 10000 == 0:
-            print(cur_it)
+    # Current state is a tuple(seed.x, seed.y, p_one.x, p_one.y)
+    state_t = get_state(game_instance.game.reset(), row_count, col_count)
 
-        # Linearly decrease epsilon
-        epsilon = 0.5 - cur_it * (0.5 / zero_eps_at)
-        if np.random.random() > epsilon:
-            action = np.argmax(q_table[matrix_state])
+    # Training phase
+    for t in range(train_iterations):
+        # print(f"Iteration {t}")
+        # Set tensor values and use forward propagation to select action
+        x = torch.empty(1, 4)
+        for i in range(4):
+            x[0][i] = state_t[i]
+        output = model.feed(x.view(-1, 4))
+        print(x)
+        print(output)
+
+        # Define action
+        action = torch.argmax(output[0])
+
+        # Get state s_t + 1
+        new_state, reward = game_instance.game.step(int(action) + 1, 1)
+        state_t1 = get_state(new_state, row_count, col_count)
+        print(state_t1)
+        # Set tensor values and calculate Q_t(s_t + 1) using forward propagation of the NN for all actions
+        x1 = torch.empty(1, 4)
+        for i in range(4):
+            x1[0][i] = state_t1[i]
+        output1 = model.feed(x1.view(-1, 4))
+
+        # Calculate max future q
+        max_future_q = float(torch.max(output1[0]))
+
+        # Calculate Q_target
+        current_q = output[0][action]
+        # q_target = reward + discount * max_future_q
+        q_target = current_q + 0.1 * (reward + discount * max_future_q)
+
+        # Clone output
+        target = torch.empty(1, 4)
+        for i in range(4):
+            target[0][i] = output[0][i]
+        target[0][action] = q_target
+
+        print("target", target)
+        loss = model.backward(output, target, t)
+        print("q_target", q_target, "loss", loss)
+
+        print("after training")
+        x_new = x.clone()
+        test = model.feed(x_new.view(-1, 4))
+        print(x_new)
+        print(test, end="\n\n")
+
+        if state_t == state_t1:
+            print(" same ")
+        # Assume new state
+        state_t = state_t1
+
+        # Pump events
+        game_instance.pump()
+        game_instance.render()
+        if t < train_iterations // 2:
+            time.sleep(0.001)
         else:
-            action = np.random.randint(0, 4)
-
-        # Update game with action, player one
-        new_state, reward = env.game.step(action + 1, 1)    # reward 0 if got seed, -1 otherwise
-        new_matrix_state = get_state(new_state)
-
-        # Q-learning equation
-        max_future_q = np.max(q_table[new_matrix_state])
-        current_q = q_table[matrix_state][action]
-        new_q = (1 - learning_rate) * current_q + learning_rate * (reward + discount * max_future_q)
-        q_table[matrix_state][action] = new_q
-
-        # Update state
-        matrix_state = new_matrix_state
-
-        if cur_it + 2000 >= episodes:
-            # Pump events
-            env.pygame.event.pump()
-            env.render()
-            time.sleep(0.1)
-
-        cur_it += 1
-    '''
+            time.sleep(0.05)

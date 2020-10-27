@@ -12,10 +12,11 @@ class Pygame:
         pygame.init()
         self.size = width, height = gm.SCREEN_WIDTH, gm.SCREEN_HEIGHT
         self.screen = None
+        self.row_count = gm.ROW_COUNT
+        self.col_count = gm.COLUMN_COUNT
 
         # Game state and stuff
         self.game = gm.Game()
-
 
     def render(self):
         if self.screen is None:

@@ -78,7 +78,7 @@ class Game:
 
         # Calculate reward
         if got_seed:
-            reward = 0
+            reward = 1
         else:
             reward = -1
 
@@ -88,8 +88,7 @@ class Game:
         # Spawn player to a random position
         row = random.randint(0, ROW_COUNT - 1)
         col = random.randint(0, COLUMN_COUNT - 1)
-        row = 2
-        col = 0
+
         the_other_player = None
         if TWO_PLAYERS:
             if self.player_one == player:
