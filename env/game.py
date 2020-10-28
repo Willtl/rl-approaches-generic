@@ -141,6 +141,19 @@ class Game:
         return got_seed
 
     def reset(self):
+        self.board = board.Board()
+        self.player_one = player.Player(1)
+        self.player_two = None
+        if TWO_PLAYERS:
+            self.player_two = player.Player(2)
+        # Spawn players
+        self.spawn_player(self.player_one)
+        if TWO_PLAYERS:
+            self.spawn_player(self.player_two)
+        # Spawn seeds
+        for i in range(NUMB_SEEDS):
+            self.board.spawn_seed(self.player_one, self.player_two)
+
         # Array with two values with the seed position
         seed_pos = self.board.seed_pos
         # Player one position

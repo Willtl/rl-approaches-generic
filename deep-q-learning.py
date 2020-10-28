@@ -13,7 +13,7 @@ The game support multiple seeds and players. In this example, I am considering o
 '''
 
 # How many change of states should be used to train the model
-train_iterations = 20000
+train_iterations = 1000
 # Once the model is trained, how many iterations should be rendered to show de results
 test_iterations = 2000
 
@@ -83,7 +83,6 @@ if __name__ == '__main__':
     # Current state is a tuple(seed.x, seed.y, p_one.x, p_one.y)
     state_t = get_state(game_instance.game.reset(), row_count, col_count)
     # Training phase
-    training = True
     for t in range(train_iterations):
         # Set tensor values
         input = torch.tensor([state_t])
@@ -100,6 +99,7 @@ if __name__ == '__main__':
         new_state, reward = game_instance.game.step(int(action) + 1, 1)
         state_t1 = get_state(new_state, row_count, col_count)
 
+
         # Calculate input given new state
         input1 = torch.tensor([state_t1])
         # Feed new state to calculate updated Q-value
@@ -111,7 +111,8 @@ if __name__ == '__main__':
         max_future_q = float(torch.max(output1[0]))
         # Current Q-value
         current_q = float(output[0][action])
-        q_target = (0.8 * current_q) + (0.2 * (reward + (discount * max_future_q)))
+        # q_target = (0.8 * current_q) + (0.2 * (reward + (discount * max_future_q)))
+        q_target = reward + (discount * max_future_q)
 
         # Define target given updated Q-value
         target = output.detach().clone()
@@ -131,3 +132,25 @@ if __name__ == '__main__':
             time.sleep(0.01)
         else:
             time.sleep(0.05)
+
+    state_t = get_state(game_instance.game.reset(), row_count, col_count)
+    for t in range(test_iterations):
+        # Set tensor values
+        input = torch.tensor([state_t])
+        # Feed to check approximated Q-values
+        output = model.feed(input)
+        # print("input", input)
+        # print("output", output)
+
+        # Define action
+        action = torch.argmax(output[0])
+        # print(action)
+
+        # Get state s_t + 1
+        new_state, reward = game_instance.game.step(int(action) + 1, 1)
+        state_t1 = get_state(new_state, row_count, col_count)
+
+        state_t = state_t1
+        # Pump events
+        game_instance.pump()
+        game_instance.render()
