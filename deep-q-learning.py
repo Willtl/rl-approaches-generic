@@ -13,7 +13,7 @@ The game support multiple seeds and players. In this example, I am considering o
 '''
 
 # How many change of states should be used to train the model
-train_iterations = 1000
+train_iterations = 5000
 # Once the model is trained, how many iterations should be rendered to show de results
 test_iterations = 2000
 
@@ -29,13 +29,13 @@ class ANN(nn.Module):
         # Fully connected layers
         self.inputs = 4
         self.outputs = 4
-        self.l1 = nn.Linear(self.inputs, 4)  # To disable bias use bias=False
-        self.l2 = nn.Linear(4, 4)
-        self.l3 = nn.Linear(4, 4)
-        self.l4 = nn.Linear(4, self.outputs)
+        self.l1 = nn.Linear(self.inputs, 32)  # To disable bias use bias=False
+        self.l2 = nn.Linear(32, 16)
+        self.l3 = nn.Linear(16, 8)
+        self.l4 = nn.Linear(8, self.outputs)
 
         # Optimizer type
-        self.learning_rate = 0.01
+        self.learning_rate = 0.001
         self.optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
 
     # Define how the data passes through the layers
@@ -57,7 +57,10 @@ class ANN(nn.Module):
         # Zero the parameter gradients
         self.zero_grad()
         # Loss function
+        # loss_criterion = nn.L1Loss()
         loss_criterion = nn.MSELoss()
+        # loss_criterion = nn.SmoothL1Loss()
+
         # Calculate loss
         loss = loss_criterion(output, target)
         # Back propagate the loss
@@ -91,9 +94,15 @@ if __name__ == '__main__':
         # print("input", input)
         # print("output", output)
 
-        # Define action
-        action = torch.argmax(output[0])
-        # print(action)
+        # Linearly decrease epsilon
+        epsilon = 0.9 - t * (0.9 / train_iterations)
+        if np.random.random() > epsilon:
+            action = torch.argmax(output[0])
+        else:
+            action = np.random.randint(0, 4)
+
+        # # Define action
+        # action = torch.argmax(output[0])
 
         # Get state s_t + 1
         new_state, reward = game_instance.game.step(int(action) + 1, 1)
@@ -109,12 +118,9 @@ if __name__ == '__main__':
 
         # Calculate max future q
         max_future_q = float(torch.max(output1[0]))
-        # Current Q-value
-        current_q = float(output[0][action])
-        # q_target = (0.8 * current_q) + (0.2 * (reward + (discount * max_future_q)))
-        q_target = reward + (discount * max_future_q)
 
         # Define target given updated Q-value
+        q_target = reward + (discount * max_future_q)
         target = output.detach().clone()
         target[0][action] = q_target
         # print("target", target)
@@ -126,12 +132,12 @@ if __name__ == '__main__':
         state_t = state_t1
 
         # Pump events
-        game_instance.pump()
-        game_instance.render()
-        if t < train_iterations // 2:
-            time.sleep(0.01)
-        else:
-            time.sleep(0.05)
+        # game_instance.pump()
+        # game_instance.render()
+        # if t < train_iterations // 2:
+        #     time.sleep(0.001)
+        # else:
+        #     time.sleep(0.05)
 
     state_t = get_state(game_instance.game.reset(), row_count, col_count)
     for t in range(test_iterations):
@@ -154,3 +160,4 @@ if __name__ == '__main__':
         # Pump events
         game_instance.pump()
         game_instance.render()
+        time.sleep(0.01)
