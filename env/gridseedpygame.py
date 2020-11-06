@@ -86,6 +86,9 @@ class Pygame:
     def pump(self):
         pygame.event.pump()
 
+    def quit_game(self):
+        pygame.quit()
+
     def run(self):
         quit = False
         while True:

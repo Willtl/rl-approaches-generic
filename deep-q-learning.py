@@ -13,7 +13,10 @@ The game support multiple seeds and players. In this example, I am considering o
 '''
 
 # How many change of states should be used to train the model
-train_iterations = 5000
+max_epochs = 2000
+# How many moves should be stored and size of batch to back propagate
+n_replay = 1000
+n_batches = 100
 # Once the model is trained, how many iterations should be rendered to show de results
 test_iterations = 2000
 
@@ -29,13 +32,12 @@ class ANN(nn.Module):
         # Fully connected layers
         self.inputs = 4
         self.outputs = 4
-        self.l1 = nn.Linear(self.inputs, 32)  # To disable bias use bias=False
-        self.l2 = nn.Linear(32, 16)
-        self.l3 = nn.Linear(16, 8)
-        self.l4 = nn.Linear(8, self.outputs)
-
+        self.l1 = nn.Linear(self.inputs, 4)  # To disable bias use bias=False
+        self.l2 = nn.Linear(4, 4)
+        self.l3 = nn.Linear(4, 4)
+        self.l4 = nn.Linear(4, self.outputs)
         # Optimizer type
-        self.learning_rate = 0.001
+        self.learning_rate = 0.01
         self.optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
 
     # Define how the data passes through the layers
@@ -63,11 +65,12 @@ class ANN(nn.Module):
 
         # Calculate loss
         loss = loss_criterion(output, target)
+        print(loss)
         # Back propagate the loss
         loss.backward()
-        print(loss)
         # Adjust the weights
         self.optimizer.step()
+
         return loss
 
 
@@ -75,6 +78,7 @@ def get_state(state, row_count, col_count):
     seed_pos = state.seed_pos
     one_pos = state.one_pos
     return [seed_pos[0] / row_count, seed_pos[1] / col_count, one_pos[0] / row_count, one_pos[1] / col_count]
+
 
 if __name__ == '__main__':
     # Neural network
@@ -86,58 +90,53 @@ if __name__ == '__main__':
     # Current state is a tuple(seed.x, seed.y, p_one.x, p_one.y)
     state_t = get_state(game_instance.game.reset(), row_count, col_count)
     # Training phase
-    for t in range(train_iterations):
-        # Set tensor values
-        input = torch.tensor([state_t])
-        # Feed to check approximated Q-values
-        output = model.feed(input)
-        # print("input", input)
-        # print("output", output)
+    for epoch in range(max_epochs):
+        for i in range(n_batches):
+            # Set tensor values
+            input = torch.tensor([state_t])
+            # Feed to check approximated Q-values
+            output = model.feed(input)
 
-        # Linearly decrease epsilon
-        epsilon = 0.9 - t * (0.9 / train_iterations)
-        if np.random.random() > epsilon:
-            action = torch.argmax(output[0])
-        else:
-            action = np.random.randint(0, 4)
+            # Linearly decrease epsilon
+            epsilon = 1.0 - epoch * (0.1 / max_epochs)
+            if np.random.random() > epsilon:
+                action = torch.argmax(output[0])
+            else:
+                action = np.random.randint(0, 4)
 
-        # # Define action
-        # action = torch.argmax(output[0])
+            # # Define action
+            # action = torch.argmax(output[0])
 
-        # Get state s_t + 1
-        new_state, reward = game_instance.game.step(int(action) + 1, 1)
-        state_t1 = get_state(new_state, row_count, col_count)
+            # Get state s_t + 1
+            new_state, reward = game_instance.game.step(int(action) + 1, 1)
+            state_t1 = get_state(new_state, row_count, col_count)
 
+            # Calculate input given new state
+            input1 = torch.tensor([state_t1])
+            # Feed new state to calculate updated Q-value
+            output1 = model.feed(input1)
+            # print("input1", input1)
+            # print("output1", output1)
 
-        # Calculate input given new state
-        input1 = torch.tensor([state_t1])
-        # Feed new state to calculate updated Q-value
-        output1 = model.feed(input1)
-        # print("input1", input1)
-        # print("output1", output1)
+            # Calculate max future q
+            max_future_q = float(torch.max(output1[0]))
 
-        # Calculate max future q
-        max_future_q = float(torch.max(output1[0]))
+            # Define target given updated Q-value
+            q_target = reward + (discount * max_future_q)
+            target = output.detach().clone()
+            target[0][action] = q_target
+            # print("target", target)
 
-        # Define target given updated Q-value
-        q_target = reward + (discount * max_future_q)
-        target = output.detach().clone()
-        target[0][action] = q_target
-        # print("target", target)
+            # Train
+            loss = model.backward(output, target, 0)
 
-        # Train
-        loss = model.backward(output, target, 0)
+            # Assume new state
+            state_t = state_t1
 
-        # Assume new state
-        state_t = state_t1
-
-        # Pump events
-        # game_instance.pump()
-        # game_instance.render()
-        # if t < train_iterations // 2:
-        #     time.sleep(0.001)
-        # else:
-        #     time.sleep(0.05)
+            # Pump events
+            game_instance.pump()
+            game_instance.render()
+            time.sleep(0.1)
 
     state_t = get_state(game_instance.game.reset(), row_count, col_count)
     for t in range(test_iterations):
