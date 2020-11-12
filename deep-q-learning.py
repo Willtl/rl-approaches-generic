@@ -16,7 +16,6 @@ The game support multiple seeds and players. In this example, I am considering o
 4 rows and 4 cols, and one seed 
 '''
 
-# How many change of states should be used to train the model
 max_epochs = 100
 # How many moves should be stored and size of batch to back propagate
 n_samples = 500
@@ -183,15 +182,12 @@ if __name__ == '__main__':
             output = model.feed(input)
         print("input", input)
         print("output", output)
-
         # Define action
         action = torch.argmax(output[0])
         print(action)
-
         # Get state s_t + 1
         new_state, reward = game_instance.game.step(int(action) + 1, 1)
         state_t1 = get_state(new_state, row_count, col_count)
-
         state_t = state_t1
         # Pump events
         game_instance.pump()

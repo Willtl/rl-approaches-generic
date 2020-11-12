@@ -7,7 +7,7 @@ NUMB_SEEDS = 1
 SEED_SPAWN_TIME = 100  # ms
 TWO_PLAYERS = False
 
-# How many rows and columns we will have
+# Number of rows and column in the grid
 ROW_COUNT = 5
 COLUMN_COUNT = 5
 
