@@ -154,7 +154,7 @@ if __name__ == '__main__':
                 state_t = state_t1
                 # Save samples
                 batch_i[i] = input.detach().clone()
-                batch_o[i] = output.clone()
+                batch_o[i] = output.detach().clone()
                 batch_t[i] = target.detach().clone()
                 # Draw game
                 game_instance.pump()
