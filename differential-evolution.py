@@ -23,19 +23,15 @@ class ANN(nn.Module):
         self.l3 = nn.Linear(4, 4)
         self.l4 = nn.Linear(4, self.outputs)
 
-        # Optimizer type
-        self.learning_rate = 0.001
-        self.optimizer = optim.Adam(self.parameters(), lr=self.learning_rate)
-
     # Define how the data passes through the layers
     def forward(self, x):
         # Passes x through layer one and activate with rectified linear unit function
-        # with torch.no_grad():
-        x = F.relu(self.l1(x))
-        x = F.relu(self.l2(x))
-        x = F.relu(self.l3(x))
-        x = F.softmax(self.l4(x), dim=1)
-        return x
+        with torch.no_grad():
+            x = F.relu(self.l1(x))
+            x = F.relu(self.l2(x))
+            x = F.relu(self.l3(x))
+            x = F.softmax(self.l4(x), dim=1)
+            return x
 
     def feed(self, x):
         outputs = self.forward(x)

@@ -8,8 +8,8 @@ SEED_SPAWN_TIME = 100  # ms
 TWO_PLAYERS = False
 
 # How many rows and columns we will have
-ROW_COUNT = 5
-COLUMN_COUNT = 5
+ROW_COUNT = 2
+COLUMN_COUNT = 2
 
 # WIDTH and HEIGHT of each grid location
 WIDTH = 30
@@ -80,7 +80,7 @@ class Game:
         if got_seed:
             reward = 1
         else:
-            reward = -1
+            reward = -0.1
 
         return state, reward
 

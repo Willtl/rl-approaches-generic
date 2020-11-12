@@ -13,7 +13,7 @@ q_table = np.random.uniform(low=0, high=0, size=q_size)
 
 # Q-learning parameters
 learning_rate = 0.1
-discount = 0.95
+discount = 0.9
 episodes = 100000
 zero_eps_at = int(0.8 * episodes)
 
@@ -46,6 +46,9 @@ if __name__ == '__main__':
         # Update game with action, player one
         new_state, reward = game_instance.game.step(action + 1, 1)    # reward 0 if got seed, -1 otherwise
         new_matrix_state = get_state(new_state)
+
+        if matrix_state == new_matrix_state:
+            reward += -0.9
 
         # Q-learning equation
         max_future_q = np.max(q_table[new_matrix_state])
