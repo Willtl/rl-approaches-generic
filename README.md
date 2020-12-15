@@ -17,12 +17,3 @@ The agent's performance with Q-learning on a *5x5* instance of the game given di
 | 1e5 | 2.5e5 | 5e5 | 1e6 | 2e6 |
 | --- | --- | --- | --- | --- |
 | ![](images/100000.gif) | ![](images/250000.gif) | ![](images/500000.gif) | ![](images/1000000.gif) | ![](images/2000000.gif) | 
- 
- 
- 
-TODO
-To solve this, DQN introduces the concepts of experience replay and target network to slow down the changes so that the Q-table can be learned gradually and in a controlled/stable manner.
-
-Experience replay stores a certain amount of of state-action-reward values (e.g. last one million) in a specialized buffer. Training of the Q-function is done with mini-batches of random samples from this buffer. Therefore, the training samples are randomized and behave closer to a typical case of supervised learning in traditional DL. This is akin to having a highly-efficient short-term memory, which can be relied upon while exploring the unknown environment.
-
-In addition, DQN generally employs two networks for storing the values of Q. One is constantly updated while the second one, the target network, is synchronized from the first network at regular intervals. The target network is used to retrieve the Q value such that the changes for the target value are less volatile.
