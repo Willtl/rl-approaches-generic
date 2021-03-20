@@ -1,6 +1,7 @@
 import env.gridseedpygame as env
 import numpy as np
 import time
+import math
 
 '''
 The game support multiple seeds and players. In this example, I am considering only one player, 
@@ -25,6 +26,7 @@ def get_state(state):
 
 
 if __name__ == '__main__':
+
     game_instance = env.Pygame()
     # game_instance.run()
 
@@ -44,8 +46,11 @@ if __name__ == '__main__':
             action = np.random.randint(0, 4)
 
         # Update game with action, player one
-        new_state, reward = game_instance.game.step(action + 1, 1)    # reward 0 if got seed, -1 otherwise
+        new_state, reward = game_instance.game.step(action + 1)    # reward 0 if got seed, -1 otherwise
         new_matrix_state = get_state(new_state)
+
+        if reward == None:
+            reward = -1.0
 
         if matrix_state == new_matrix_state:
             reward += -0.9

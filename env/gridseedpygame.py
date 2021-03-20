@@ -1,6 +1,9 @@
+from os import environ
+environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
 import sys, pygame
 from pygame.locals import *
 import random
+import math
 
 import env.utils as utils
 import env.game as gm
@@ -31,8 +34,6 @@ class Pygame:
                     color = utils.Color.GREEN.value
                 elif self.game.board.grid[row][column] == self.game.player_one.id:
                     color = utils.Color.BLUE.value
-                elif self.game.player_two is not None and self.game.board.grid[row][column] == self.game.player_two.id:
-                    color = utils.Color.RED.value
                 else:
                     color = utils.Color.WHITE.value
 
@@ -54,34 +55,12 @@ class Pygame:
         player = 0
         if event.key == K_w:
             action = 1
-            player = 1
         elif event.key == K_d:
             action = 2
-            player = 1
         elif event.key == K_s:
             action = 3
-            player = 1
         elif event.key == K_a:
             action = 4
-            player = 1
-        self.game.step(action, player)
-
-        if gm.TWO_PLAYERS:
-            action = 0
-            player = 0
-            if event.key == K_UP:
-                action = 1
-                player = 2
-            elif event.key == K_RIGHT:
-                action = 2
-                player = 2
-            elif event.key == K_DOWN:
-                action = 3
-                player = 2
-            elif event.key == K_LEFT:
-                action = 4
-                player = 2
-            self.game.step(action, player)
 
     def pump(self):
         pygame.event.pump()
@@ -106,6 +85,3 @@ class Pygame:
 
             self.render()
 
-
-if __name__ == "__main__":
-    main()
