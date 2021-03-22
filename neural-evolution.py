@@ -77,24 +77,6 @@ class ANN(nn.Module):
 
 class GeneticAlgorithm:
     def __init__(self):
-        # with torch.no_grad():
-        #     print(model1.state_dict()['l1.weight'])
-        #     print(model2.state_dict()['l1.weight'])
-        #
-        #     Strategy one
-        #     state_dic1 = model1.state_dict()
-        #     state_dic2 = model2.state_dict()
-        #     state_dic1['l1.weight'] = state_dic2['l1.weight']
-        #     model1.load_state_dict(state_dic1)
-        #     print(model1.state_dict()['l1.weight'])
-        #     END Strategy one
-        #
-        #     Strategy two
-        #     model1.l1.weight.data = torch.clone(model2.l1.weight.data)
-        #     model2.l1.weight.data[0][0] = 0
-        #     print(model1.state_dict()['l1.weight'])
-        #     print(model2.state_dict()['l1.weight'])
-
         # GA's parameter
         self.number_individuals = multiprocessing.cpu_count()
         self.iterations = 500
@@ -314,6 +296,24 @@ def main():
 
 
 if __name__ == '__main__':
+    # with torch.no_grad():
+    #     print(model1.state_dict()['l1.weight'])
+    #     print(model2.state_dict()['l1.weight'])
+    #
+    #     1st
+    #     state_dic1 = model1.state_dict()
+    #     state_dic2 = model2.state_dict()
+    #     state_dic1['l1.weight'] = state_dic2['l1.weight']
+    #     model1.load_state_dict(state_dic1)
+    #     print(model1.state_dict()['l1.weight'])
+    #     END Strategy one
+    #
+    #     2nd
+    #     model1.l1.weight.data = torch.clone(model2.l1.weight.data)
+    #     model2.l1.weight.data[0][0] = 0
+    #     print(model1.state_dict()['l1.weight'])
+    #     print(model2.state_dict()['l1.weight'])
+
     # Run game to test
     # game_instance = env.Pygame()
     # game_instance.run()
