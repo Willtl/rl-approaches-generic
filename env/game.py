@@ -89,8 +89,8 @@ class Game:
                 player.score += 1.0
                 reward = 1.0
                 self.board.spawn_seed(self.player_one)
-            # else:     # used only on q-learning
-            #    reward = -0.01    # used only on q-learning
+            else:     # used only on q-learning
+               reward = -0.1    # used only on q-learning
             # Update grid with new position
             self.board.grid[player.row][player.col] = player.id
 

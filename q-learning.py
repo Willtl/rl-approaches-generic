@@ -31,7 +31,7 @@ if __name__ == '__main__':
     # game_instance.run()
 
     # Initial state
-    matrix_state = get_state(game_instance.game.reset())
+    state = get_state(game_instance.game.reset())
 
     cur_it = 0
     while cur_it < episodes:
@@ -41,28 +41,28 @@ if __name__ == '__main__':
         # Linearly decrease epsilon
         epsilon = 0.5 - cur_it * (0.5 / zero_eps_at)
         if np.random.random() > epsilon:
-            action = np.argmax(q_table[matrix_state])
+            action = np.argmax(q_table[state])
         else:
             action = np.random.randint(0, 4)
 
         # Update game with action, player one
         new_state, reward = game_instance.game.step(action + 1)    # reward 0 if got seed, -1 otherwise
-        new_matrix_state = get_state(new_state)
-
-        if reward == None:
+        new_state = get_state(new_state)
+        # If it hits wall reward -1
+        if reward is None:
             reward = -1.0
 
-        if matrix_state == new_matrix_state:
-            reward += -0.9
+        # if matrix_state == new_matrix_state:
+        #     reward += -0.9
 
         # Q-learning equation
-        max_future_q = np.max(q_table[new_matrix_state])
-        current_q = q_table[matrix_state][action]
+        max_future_q = np.max(q_table[new_state])
+        current_q = q_table[state][action]
         new_q = (1 - learning_rate) * current_q + learning_rate * (reward + discount * max_future_q)
-        q_table[matrix_state][action] = new_q
+        q_table[state][action] = new_q
 
         # Update state
-        matrix_state = new_matrix_state
+        state = new_state
 
         if cur_it > 0.99 * episodes:
             # Pump events

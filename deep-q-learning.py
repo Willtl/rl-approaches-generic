@@ -18,8 +18,8 @@ The game support multiple seeds and players. In this example, I am considering o
 
 max_epochs = 100
 # How many moves should be stored and size of batch to back propagate
-n_samples = 500
-batch_size = 25
+n_samples = 1000
+batch_size = 32
 # Once the model is trained, how many iterations should be rendered to show de results
 test_iterations = 2000
 
@@ -33,21 +33,19 @@ class ANN(nn.Module):
         # Initialize superclass
         super().__init__()
         # Fully connected layers
-        self.inputs = 4
+        self.inputs = 3
         self.outputs = 4
         self.l1 = nn.Linear(self.inputs, 4)  # To disable bias use bias=False
         self.l2 = nn.Linear(4, 4)
-        self.l3 = nn.Linear(4, 4)
-        self.l4 = nn.Linear(4, self.outputs)
+        self.l3 = nn.Linear(4, self.outputs)
 
     # Define how the data passes through the layers
     def foward(self, x):
         # Passes x through layer one and activate with rectified linear unit function
         x = F.relu(self.l1(x))
         x = F.relu(self.l2(x))
-        x = F.relu(self.l3(x))
         # Linear output layer
-        x = self.l4(x)
+        x = self.l3(x)
         return x
 
     def feed(self, x):
@@ -94,27 +92,38 @@ class ReplayDataset(Dataset):
         return self.n_samples
 
 
+# Normalize the game state
 def get_state(state, row_count, col_count):
-    seed_pos = state.seed_pos
-    one_pos = state.one_pos
-    return [seed_pos[0] / row_count, seed_pos[1] / col_count, one_pos[0] / row_count, one_pos[1] / col_count]
+    player = state.one_pos
+    seed = state.seed_pos
+    # Calculate distance in x, and y
+    adj = seed[0] - player[0]
+    opp = seed[1] - player[1]
+    # Hyp./Euclidean distance
+    hyp = math.sqrt(pow(adj, 2) + pow(opp, 2))
+    sinx = adj / hyp
+    cosx = opp / hyp
+    # Normalize hyp.
+    max_hyp = math.sqrt(math.pow(row_count - 1, 2) + math.pow(col_count - 1, 2))
+    hyp = hyp / max_hyp
+    return [hyp, sinx, cosx]
 
 
-if __name__ == '__main__':
+def main():
     # Neural network
     model = ANN()
     model_target = ANN()
     # Instance of the game
     game_instance = env.Pygame()
-    row_count = float(game_instance.row_count) - 1
-    col_count = float(game_instance.col_count) - 1
+    row_count = float(game_instance.row_count)
+    col_count = float(game_instance.col_count)
     # Collecting data
     for epoch in range(max_epochs):
         print(f"Epoch: {epoch}")
         # Linearly decrease epsilon
         epsilon = 1.0 - epoch * (1.0 / max_epochs)
         # Containers to store the dataset (replay samples)
-        batch_i = torch.Tensor(n_samples, 1, 4)
+        batch_i = torch.Tensor(n_samples, 1, 3)
         batch_o = torch.Tensor(n_samples, 1, 4)
         batch_t = torch.Tensor(n_samples, 1, 4)
         # Current state is normalized a tuple(seed.x, seed.y, p_one.x, p_one.y)
@@ -128,15 +137,16 @@ if __name__ == '__main__':
                 # Pick action (1 = up, 2 = right, 3 = down, 4 = left)
                 action = None
                 if np.random.random() > epsilon:
-                    action = torch.argmax(output[0])    # greedy
+                    action = torch.argmax(output[0])  # greedy
                 else:
-                    action = np.random.randint(0, 4)    # random
+                    action = np.random.randint(0, 4)  # random
+
                 # Get state s_t + 1
-                new_state, reward = game_instance.game.step(int(action) + 1, 1)
+                new_state, reward = game_instance.game.step(int(action) + 1)
                 state_t1 = get_state(new_state, row_count, col_count)
                 # Decrease reward in case it moved towards wall
-                if state_t == state_t1:
-                    reward += -0.9
+                if reward is None:
+                    reward = -1
                 # Get input given new state
                 input1 = torch.tensor([state_t1])
                 # Feed new state to get the max Q-value at new position
@@ -156,19 +166,21 @@ if __name__ == '__main__':
                 batch_o[i] = output.detach().clone()
                 batch_t[i] = target.detach().clone()
                 # Draw game
-                game_instance.pump()
-                game_instance.render()
-                time.sleep(0.000001)
+                # game_instance.pump()
+                # game_instance.render()
+                # time.sleep(0.000001)
         # Create data set
         print(f"Creating dataset composed of {n_samples} samples, with batch size of {batch_size} ")
         dataset = ReplayDataset(batch_i, batch_o, batch_t)
-        dataloader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=True, num_workers=0)
+        # Create minibatch
+        original, mini = torch.utils.data.random_split(dataset, [int(0.75 * n_samples), int(0.25 * n_samples)])
+        dataloader = DataLoader(dataset=mini, batch_size=batch_size, shuffle=True, num_workers=0)
         # Train based on the replay
         model.backward(dataloader)
         # Update target network every 25 epochs
-        if (epoch + 1) % 25 == 0:
+        if (epoch + 1) % 20 == 0:
             print("Updating target network")
-            model_target = copy.deepcopy(model)
+            model_target.load_state_dict(copy.deepcopy(model.state_dict()))
 
     # Testing phase
     state_t = get_state(game_instance.game.reset(), row_count, col_count)
@@ -186,10 +198,14 @@ if __name__ == '__main__':
         action = torch.argmax(output[0])
         print(action)
         # Get state s_t + 1
-        new_state, reward = game_instance.game.step(int(action) + 1, 1)
+        new_state, reward = game_instance.game.step(int(action) + 1)
         state_t1 = get_state(new_state, row_count, col_count)
         state_t = state_t1
         # Pump events
         game_instance.pump()
         game_instance.render()
         time.sleep(0.5)
+
+
+if __name__ == '__main__':
+    main()
