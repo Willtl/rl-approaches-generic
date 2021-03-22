@@ -20,13 +20,11 @@ torch.autograd.set_grad_enabled(False)
 
 class ANN(nn.Module):
     def __init__(self):
-        # Initialize superclass
         super().__init__()
-        # Fully connected layers
         self.inputs = 3
         self.outputs = 4
-        self.normal = normal.Normal(0.0, 1.0)       # normal distribution
-        self.l1 = nn.Linear(self.inputs, 4)     # To disable bias use bias=False
+        self.normal = normal.Normal(0.0, 1.0)
+        self.l1 = nn.Linear(self.inputs, 4)
         self.l2 = nn.Linear(4, 4)
         self.l3 = nn.Linear(4, self.outputs)
 
@@ -41,23 +39,18 @@ class ANN(nn.Module):
         outputs = self.forward(x)
         return outputs
 
-    # Normalize the game state
     def get_state(self, state, row_count, col_count):
         player = state.one_pos
         seed = state.seed_pos
-        # Calculate distance in x, and y
         adj = seed[0] - player[0]
         opp = seed[1] - player[1]
-        # Hyp./Euclidean distance
         hyp = math.sqrt(pow(adj, 2) + pow(opp, 2))
         sinx = adj / hyp
         cosx = opp / hyp
-        # Normalize hyp.
         max_hyp = math.sqrt(math.pow(row_count-1, 2) + math.pow(col_count-1, 2))
         hyp = hyp / max_hyp
         return [hyp, sinx, cosx]
 
-    # Disable grad for all parameters in the model
     def disable_grad(self):
         for param in self.parameters():
             param.requires_grad = False
@@ -77,18 +70,12 @@ class ANN(nn.Module):
 
 class GeneticAlgorithm:
     def __init__(self):
-        # GA's parameter
         self.number_individuals = multiprocessing.cpu_count()
         self.iterations = 500
-        # Population t
         self.pop = []
-        # Population t+1
         self.pop_t1 = []
-        # Fitness of self.pop
         self.fitness = torch.Tensor(self.number_individuals)
-        # Fitness of self.pop_t1
         self.fitness_t1 = torch.Tensor(self.number_individuals)
-        # Initialize population and ANNs
         self.init_population()
 
     def init_population(self):
@@ -102,26 +89,16 @@ class GeneticAlgorithm:
 
     # Evaluate only with game logic
     def run_game(self, id):
-        # Fitness of the id-th ANN
         fitness = 0
-
-        # Instance of the game used to evaluate id-th ANN
         game_instance = gm.Game()
         row_count = float(gm.ROW_COUNT)
         col_count = float(gm.COLUMN_COUNT)
-
-        # Current state of the game
         game_state = self.pop_t1[id].get_state(game_instance.reset(), row_count, col_count)
         for i in range(250):
-            # Input based on the state
             input = torch.tensor([game_state])
-            # Feed the input
             output = self.pop_t1[id].feed(input)
-            # Check action with highest probability
             action = torch.argmax(output[0])
-            # Get state s_t + 1
             new_state, reward = game_instance.step(int(action) + 1)
-            # End Game situations
             if reward is None:
                 fitness = -1
                 break
@@ -130,48 +107,31 @@ class GeneticAlgorithm:
 
         return fitness
 
-    # Evaluate and show best individual
     def run_game_graphic(self, id):
         index = torch.argmax(self.fitness)
-        # Fitness of the id-th ANN
         fitness = 0
-
-        # Instance of the game used to evaluate id-th ANN
         game_instance = env.Pygame()
         row_count = float(game_instance.row_count)
         col_count = float(game_instance.col_count)
-
-        # Current state of the game
         game_state = self.pop_t1[id].get_state(game_instance.game.reset(), row_count, col_count)
         for i in range(50):
-            # Input based on the state
             input = torch.tensor([game_state])
-            # Feed the input
             output = self.pop_t1[id].feed(input)
-            # Check action with highest probability
             action = torch.argmax(output[0])
-            # Get state s_t + 1
             new_state, reward = game_instance.game.step(int(action) + 1)
-            # End Game situations
             if reward is None:
                 break
             fitness += reward
             game_state = self.pop_t1[id].get_state(new_state, row_count, col_count)
-
-            # Render best individual
             if id == index.item():
                 game_instance.pump()
                 game_instance.render()
                 time.sleep(0.05)
-
-        # Quit the game
         game_instance.quit_game()
         del game_instance
-
         return fitness
 
     def evaluate(self):
-        # Run self.number_individuals games in parallel
         fitness = Parallel(n_jobs=multiprocessing.cpu_count())(
             delayed(self.run_game)(i) for i in range(self.number_individuals))
         return fitness
@@ -183,14 +143,11 @@ class GeneticAlgorithm:
             index2 = self.tournament_selection(2)
         return index1, index2
 
-    # Tournament selection
     def tournament_selection(self, tournament_size):
-        # Pick two individuals at random
         index1 = np.random.randint(0, self.number_individuals)
         index2 = np.random.randint(0, self.number_individuals)
         while index2 == index1:
             index2 = np.random.randint(0, self.number_individuals)
-        # The one with highest fitness win the tournament
         if self.fitness[index1] > self.fitness[index2]:
             return index1
         if self.fitness[index2] > self.fitness[index1]:
@@ -201,7 +158,6 @@ class GeneticAlgorithm:
             else:
                 return index2
 
-    # Uniform crossover
     def crossover(self, par1, par2, child):
         for name, param in self.pop_t1[child].named_parameters():
             if len(param.shape) == 2:
@@ -211,7 +167,6 @@ class GeneticAlgorithm:
                             param.data[i][j] = self.pop[par1].state_dict()[name].data[i][j]
                         else:
                             param.data[i][j] = self.pop[par2].state_dict()[name].data[i][j]
-
             if len(param.shape) == 1:
                 for i in range(param.shape[0]):
                     if np.random.rand() <= 0.5:
@@ -222,67 +177,47 @@ class GeneticAlgorithm:
     def optimize(self):
         with torch.no_grad():
             for iteration in range(self.iterations):
-                # Linearly decreases mutation rate from 10% to 1%
                 mutation_rate = 0.01 + (0.09 - iteration * (0.09 / self.iterations))
-                # Print every 10 iterations
                 if iteration % 10 == 0:
                     print(f"Iteration {iteration}, mutation: {mutation_rate}")
                     print('fitness  ', self.fitness)
                     print('fitnesst1       ', self.fitness_t1)
-                # Create New Individuals
                 for i in range(self.number_individuals):
-                    # Pick two parents using tournament selection
                     index1, index2 = self.select_two()
-                    # create new ith individual using uniform crossover
                     self.crossover(index1, index2, i)
-                    # apply uniform mutation given probability
                     self.pop_t1[i].mutate(mutation_rate)
-                # Evaluate new individuals
                 self.fitness_t1 = self.evaluate()
-                # Replace current ith individual if new ith individual is better or equal
                 for i in range(self.number_individuals):
                     if self.fitness[i] <= self.fitness_t1[i]:
                         self.fitness[i] = self.fitness_t1[i]
                         self.pop[i].load_state_dict(copy.deepcopy(self.pop_t1[i].state_dict()))
 
-        # Store best individual
         best = self.get_best()
         torch.save(self.pop[best].state_dict(), f'neural-evo-models/model_score{int(self.fitness[best])}')
-        print(best.item())
-        quit()
 
     def get_best(self):
         return torch.argmax(self.fitness)
 
     def test_model(self, model_name):
-        # Instance of the game
         game_instance = env.Pygame()
-        # Model
         model = ANN()
         model.load_state_dict(torch.load('neural-evo-models/' + model_name))
-
         for param in model.parameters():
             print(param)
-
         row_count = float(game_instance.row_count)
         col_count = float(game_instance.col_count)
         state_t = model.get_state(game_instance.game.reset(), row_count, col_count)
         for t in range(1000):
-            # Set tensor values
             input = torch.tensor([state_t])
-            # Feed
             output = model.feed(input)
-            # Define action
             action = torch.argmax(output[0])
-
-            # Get state s_t + 1
             new_state, reward = game_instance.game.step(int(action) + 1)
             state_t1 = model.get_state(new_state, row_count, col_count)
             if reward is None:
                 print('Dead by wall')
                 break
             state_t = state_t1
-            # Pump events
+            # Render
             game_instance.pump()
             game_instance.render()
             time.sleep(0.01)
