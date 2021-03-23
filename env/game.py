@@ -34,7 +34,7 @@ class State:
 class Game:
     def __init__(self):
         self.board = board.Board()
-        self.player_one = player.Player(1)
+        self.player_one = player.Player(1, ROW_COUNT + COLUMN_COUNT)
         # Spawn players
         self.spawn_player(self.player_one)
         # Spawn seeds
@@ -75,10 +75,12 @@ class Game:
         reward = 0
         new_row = player.row + row
         new_col = player.col + col
-
         if new_row < 0 or new_row > ROW_COUNT - 1 or new_col < 0 or new_col > COLUMN_COUNT - 1:
-            reward = None
+            reward = 'wall'
+        elif self.player_one.life <= 0:
+            reward = 'dead'
         else:
+            self.player_one.life -= 1
             # Remove player from current position on the board
             self.board.grid[player.row][player.col] = 0
             # New position
@@ -88,9 +90,10 @@ class Game:
             if self.board.grid[player.row][player.col] == 3:
                 player.score += 1.0
                 reward = 1.0
+                self.player_one.life += ROW_COUNT + COLUMN_COUNT
                 self.board.spawn_seed(self.player_one)
-            else:     # used only on q-learning
-               reward = -0.1    # used only on q-learning
+            # else:     # used only on q-learning
+            #    reward = -0.1    # used only on q-learning
             # Update grid with new position
             self.board.grid[player.row][player.col] = player.id
 
@@ -98,7 +101,7 @@ class Game:
 
     def reset(self):
         self.board = board.Board()
-        self.player_one = player.Player(1)
+        self.player_one = player.Player(1, ROW_COUNT + COLUMN_COUNT)
         self.spawn_player(self.player_one)
 
         # Spawn seeds

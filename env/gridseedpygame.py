@@ -52,7 +52,6 @@ class Pygame:
     def control(self, event):
         # Player one
         action = 0
-        player = 0
         if event.key == K_w:
             action = 1
         elif event.key == K_d:
@@ -61,6 +60,7 @@ class Pygame:
             action = 3
         elif event.key == K_a:
             action = 4
+        self.game.step(action)
 
     def pump(self):
         pygame.event.pump()
