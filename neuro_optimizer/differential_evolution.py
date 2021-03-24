@@ -5,6 +5,7 @@ import random
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from joblib import Parallel, delayed
 
 import env.game as gm
@@ -21,7 +22,7 @@ class DifferentialEvolution:
         self.numb_parameters = 0
         self.number_individuals = multiprocessing.cpu_count()
         self.iterations = 500
-        self.diff_coeff = 0.99
+        self.diff_coeff = 0.85
         self.crossover_rate = 0.075
         self.pop = []
         self.pop_t1 = []
@@ -50,7 +51,7 @@ class DifferentialEvolution:
                 if (iteration + 1) % 10 == 0:
                     print(f"Iteration: {iteration}, fitness: {self.fitness.data}")
                 for i in range(self.number_individuals):
-                    if random.random() <= 1.0:
+                    if random.random() <= 0.5:
                         a, b, c = self.select_three_rand()
                     else:
                         a, b, c = self.select_best_three()
@@ -93,8 +94,17 @@ class DifferentialEvolution:
             index2 = random.randint(0, self.number_individuals - 1)
         return index1, index2
 
+    def sample(self, probs):
+        val = random.random()
+        csum = 0
+        for i, p in enumerate(probs):
+            csum += p
+            if csum > val:
+                return i
+
     def select_best_three(self):
-        best = self.get_best()
+        probs = F.softmax(self.fitness, dim=-1)
+        best = self.sample(probs)
         index1 = random.randint(0, self.number_individuals - 1)
         while index1 == best:
             index1 = random.randint(0, self.number_individuals - 1)
