@@ -20,9 +20,9 @@ class ANN(nn.Module):
         self.inputs = 3
         self.outputs = 4
         self.normal = normal.Normal(0.0, 1.0)
-        self.l1 = nn.Linear(self.inputs, 4)
-        self.l2 = nn.Linear(4, 4)
-        self.l3 = nn.Linear(4, self.outputs)
+        self.l1 = nn.Linear(self.inputs, 8)
+        self.l2 = nn.Linear(8, 8)
+        self.l3 = nn.Linear(8, self.outputs)
 
     def forward(self, x):
         with torch.no_grad():
@@ -50,6 +50,21 @@ class ANN(nn.Module):
     def disable_grad(self):
         for param in self.parameters():
             param.requires_grad = False
+
+    def init_xavier(self):
+        for name, param in self.named_parameters():
+            # Init weights with xavier
+            if len(param.shape) == 2:
+                nn.init.xavier_uniform_(param)
+            # Set bias to zero
+            if len(param.shape) == 1:
+                param.data.fill_(0.0)
+
+        # with torch.no_grad():
+        #     # Xavier initialization
+        #     nn.init.xavier_uniform_(self.l1.weight)
+        #     # Set bias to zero
+        #     self.l1.bias.data.fill_(0.0)
 
     def mutate(self, rate):
         for name, param in self.named_parameters():

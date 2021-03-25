@@ -17,6 +17,9 @@ torch.autograd.set_grad_enabled(False)
 class GeneticAlgorithm:
     def __init__(self, model):
         self.model = model
+        self.cpu = torch.device("cpu")
+        self.gpu = torch.device("cuda:0")
+        self.device = self.cpu
         self.number_individuals = multiprocessing.cpu_count()
         self.iterations = 500
         self.pop = []
@@ -27,19 +30,23 @@ class GeneticAlgorithm:
 
     def init_population(self):
         for i in range(self.number_individuals):
-            self.pop.append(self.model())
-            self.pop_t1.append(self.model())
+            self.pop.append(self.model().to(self.device))
+            self.pop_t1.append(self.model().to(self.device))
             self.pop[i].disable_grad()
             self.pop_t1[i].disable_grad()
+            self.pop[i].init_xavier()
+            self.pop_t1[i].init_xavier()
             self.fitness[i] = -100
             self.fitness_t1[i] = -100
 
     def optimize(self):
         with torch.no_grad():
+            start = time.time()
             for iteration in range(self.iterations):
                 mutation_rate = 0.01 + (0.19 - iteration * (0.19 / self.iterations))
                 if (iteration + 1) % 10 == 0:
-                    print(f"Iteration: {iteration}, fitness: {self.fitness.data}, mutation rate: {mutation_rate}")
+                    print(f"Iteration: {iteration}, fitness: {self.fitness.data}, mutation rate: {mutation_rate}, time: {time.time() - start}")
+                    start = time.time()
                 for i in range(self.number_individuals):
                     index1, index2 = self.select_two_tournament()
                     self.crossover(index1, index2, i)

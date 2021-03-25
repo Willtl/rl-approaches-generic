@@ -18,7 +18,9 @@ torch.autograd.set_grad_enabled(False)
 class DifferentialEvolution:
     def __init__(self, model):
         self.model = model
-        # Calculate the number of parameters
+        self.cpu = torch.device("cpu")
+        self.gpu = torch.device("cuda:0")
+        self.device = self.cpu
         self.numb_parameters = 0
         self.number_individuals = multiprocessing.cpu_count()
         self.iterations = 500
@@ -38,23 +40,27 @@ class DifferentialEvolution:
                 self.numb_parameters += param.shape[0]
 
         for i in range(self.number_individuals):
-            self.pop.append(self.model())
-            self.pop_t1.append(self.model())
+            self.pop.append(self.model().to(self.device))
+            self.pop_t1.append(self.model().to(self.device))
             self.pop[i].disable_grad()
             self.pop_t1[i].disable_grad()
+            self.pop[i].init_xavier()
+            self.pop_t1[i].init_xavier()
             self.fitness[i] = -100
             self.fitness_t1[i] = -100
 
     def optimize(self):
         with torch.no_grad():
+            start = time.time()
             for iteration in range(self.iterations):
                 if (iteration + 1) % 10 == 0:
-                    print(f"Iteration: {iteration}, fitness: {self.fitness.data}")
+                    print(f"Iteration: {iteration}, fitness: {self.fitness.data}, time: {time.time() - start}")
+                    start = time.time()
                 for i in range(self.number_individuals):
                     if random.random() <= 0.5:
-                        a, b, c = self.select_three_rand()
+                        a, b, c = self.select_three_rand(i)
                     else:
-                        a, b, c = self.select_best_three()
+                        a, b, c = self.select_best_three(i)
                     R = random.randint(0, self.numb_parameters - 1)
                     self.crossover(a, b, c, R, i)
                 self.fitness_t1 = self.evaluate()
@@ -80,13 +86,6 @@ class DifferentialEvolution:
         #         delayed(self.run_game_graphic)(i) for i in range(self.number_individuals))
         return fitness
 
-    def select_two_tournament(self):
-        index1 = self.tournament_selection(2)
-        index2 = self.tournament_selection(2)
-        while index1 == index2:
-            index2 = self.tournament_selection(2)
-        return index1, index2
-
     def select_two_rand(self):
         index1 = random.randint(0, self.number_individuals - 1)
         index2 = random.randint(0, self.number_individuals - 1)
@@ -102,9 +101,11 @@ class DifferentialEvolution:
             if csum > val:
                 return i
 
-    def select_best_three(self):
+    def select_best_three(self, index):
         probs = F.softmax(self.fitness, dim=-1)
         best = self.sample(probs)
+        if index == best:
+            best = random.randint(0, self.number_individuals - 1)
         index1 = random.randint(0, self.number_individuals - 1)
         while index1 == best:
             index1 = random.randint(0, self.number_individuals - 1)
@@ -113,25 +114,10 @@ class DifferentialEvolution:
             index2 = random.randint(0, self.number_individuals - 1)
         return best, index1, index2
 
-    def select_three_rand(self):
-        indices = [i for i in range(self.number_individuals)]
+    def select_three_rand(self, index):
+        indices = [i for i in range(self.number_individuals) if i != index]
         random.shuffle(indices)
         return indices[0], indices[1], indices[2]
-
-    def tournament_selection(self, tournament_size):
-        index1 = np.random.randint(0, self.number_individuals)
-        index2 = np.random.randint(0, self.number_individuals)
-        while index2 == index1:
-            index2 = np.random.randint(0, self.number_individuals)
-        if self.fitness[index1] > self.fitness[index2]:
-            return index1
-        if self.fitness[index2] > self.fitness[index1]:
-            return index2
-        else:
-            if np.random.rand() < 0.5:
-                return index1
-            else:
-                return index2
 
     def crossover(self, a, b, c, R, child):
         param_counter = 0
@@ -167,7 +153,7 @@ class DifferentialEvolution:
         col_count = float(gm.COLUMN_COUNT)
         game_state = self.pop_t1[id].get_state(game_instance.reset(), row_count, col_count)
         for i in range(300):
-            input = torch.tensor([game_state])
+            input = torch.tensor([game_state]).to(self.device)
             output = self.pop_t1[id].feed(input)
             action = torch.argmax(output[0])
             new_state, reward = game_instance.step(int(action) + 1)
