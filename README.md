@@ -1,4 +1,3 @@
 # rf-learning-seed-game
 
-RL approaches (DDQL and neural evolution) template model for generic environments.
-  
+Reinforcement learning being applied to a simple grid problem. Neuroevolution solvers are Differential Evolution and Genetic Algorithm.   
